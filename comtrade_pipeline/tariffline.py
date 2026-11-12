@@ -14,13 +14,19 @@ from .config import get_api_key, get_output_dir
 
 logger = logging.getLogger("comtrade_pipeline")
 
+from .country_resolver import resolve_countries
+
 DEFAULT_COUNTRIES = {"USA": "842", "Russia": "643"}
 DEFAULT_COLUMNS = ["period", "reporterDesc", "partnerDesc", "cmdCode", "cmdDesc",
                    "primaryValue", "netWgt", "qty", "qtyUnitAbbr"]
 
 
 def parse_country_args(arg_str: str) -> Dict[str, str]:
-    """Parse 'USA:842,Russia:643' or '842,643' into {name: code}."""
+    """Parse 'USA:842,Russia:643', ISO3 'USA,RUS,THA', or '842,643' into {name: code}."""
+    resolved = resolve_countries(arg_str)
+    if resolved:
+        return {c["name"]: c["code"] for c in resolved}
+
     countries: Dict[str, str] = {}
     for item in arg_str.split(","):
         item = item.strip()

@@ -15,7 +15,13 @@ def test_chunk_list():
 
 def test_parse_country_args():
     assert parse_country_args("USA:842, Russia:643") == {"USA": "842", "Russia": "643"}
-    assert parse_country_args("842,,643") == {"Country_842": "842", "Country_643": "643"}
+    # Resolves numeric M49 codes using country resolver
+    assert parse_country_args("842,,643") == {"USA": "842", "Russian Federation": "643"}
+    # Resolves ISO3 alpha codes
+    res = parse_country_args("THA, VNM")
+    assert res == {"Thailand": "764", "Viet Nam": "704"}
+    # Fallback for unknown numeric code
+    assert parse_country_args("99999") == {"Country_99999": "99999"}
 
 
 def test_get_api_key_priority(monkeypatch):
