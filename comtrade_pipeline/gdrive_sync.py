@@ -137,7 +137,7 @@ def download_gdrive_file(service, file_id: str, destination_path: Path) -> Path:
     from googleapiclient.http import MediaIoBaseDownload
 
     destination_path.parent.mkdir(parents=True, exist_ok=True)
-    request = service.files().get_media(fileId=file_id)
+    request = service.files().get_media(fileId=file_id, supportsAllDrives=True)
 
     with open(destination_path, "wb") as fh:
         downloader = MediaIoBaseDownload(fh, request, chunksize=1024 * 1024 * 5)
@@ -161,7 +161,12 @@ def upload_update_gdrive_file(service, file_id: str, source_path: Path, mime_typ
     print(f"  📤 กำลังอัปเดตไฟล์บน Google Drive ({source_path.name}, {file_size_mb:.2f} MB)...")
     updated = (
         service.files()
-        .update(fileId=file_id, media_body=media, fields="id, name, modifiedTime")
+        .update(
+            fileId=file_id,
+            media_body=media,
+            fields="id, name, modifiedTime",
+            supportsAllDrives=True,
+        )
         .execute()
     )
     print(f"  ✅ อัปเดตไฟล์บน Google Drive เรียบร้อย! (ID: {updated.get('id')})")

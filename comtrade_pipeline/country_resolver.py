@@ -6,6 +6,7 @@ Uses local metadata cache for zero-latency offline resolution with online fallba
 """
 
 import logging
+from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 import pandas as pd
 
@@ -25,7 +26,10 @@ def _init_lookups():
     if _IS_INITIALIZED:
         return
 
-    meta_file = get_output_dir() / "metadata_countries.csv"
+    # Check packaged data first, then output directory
+    meta_file = Path(__file__).parent / "data" / "metadata_countries.csv"
+    if not meta_file.is_file():
+        meta_file = get_output_dir() / "metadata_countries.csv"
     if not meta_file.is_file():
         return
 
