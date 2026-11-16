@@ -7,6 +7,7 @@ from typing import List, Optional
 
 from .analysis import run_all_samples
 from .config import ConfigError, get_api_key, get_output_dir, mask_key, setup_logging
+from .consolidate import consolidate_master_rice
 from .country_groups import export_country_groups_files, load_all_country_groups
 from .country_resolver import resolve_countries
 from .country_rice import download_country_rice_group
@@ -120,6 +121,7 @@ def build_parser() -> argparse.ArgumentParser:
     lu = sub.add_parser("live-updates", help="Check recent dataset release announcements from UN Comtrade")
     lu.add_argument("--days", type=int, default=30)
 
+    sub.add_parser("consolidate-master", help="Consolidate all 272 country files into master_rice_import.csv and export.csv")
     sub.add_parser("list-groups", help="Display all country groups")
     sub.add_parser("analysis", help="Final data / trade balance / mirror samples")
     sub.add_parser("check-key", help="Verify API key & output folder")
@@ -179,20 +181,21 @@ def interactive_menu(api_key: Optional[str] = None) -> None:
                 api_key=api_key,
             ),
         ),
-        "9": ("📋 แสดงรายชื่อกลุ่มประเทศทั้งหมด (List Groups)", lambda: list_country_groups_cli()),
-        "10": ("วิเคราะห์ตัวอย่าง (Trade Balance / Mirror Data)", lambda: run_all_samples(api_key=api_key)),
-        "11": ("ตรวจสอบสถานะ API Key และโฟลเดอร์ผลลัพธ์", lambda: check_key(api_key)),
+        "9": ("📦 รวมฐานข้อมูล Master ข้าวโลก 272 ประเทศ (Consolidate Master CSV & Parquet)", lambda: consolidate_master_rice()),
+        "10": ("📋 แสดงรายชื่อกลุ่มประเทศทั้งหมด (List Groups)", lambda: list_country_groups_cli()),
+        "11": ("วิเคราะห์ตัวอย่าง (Trade Balance / Mirror Data)", lambda: run_all_samples(api_key=api_key)),
+        "12": ("ตรวจสอบสถานะ API Key และโฟลเดอร์ผลลัพธ์", lambda: check_key(api_key)),
     }
     while True:
         print("\n" + "=" * 65 + "\n🌍 UN Comtrade Data Pipeline (ระบบข้อมูลการค้าระหว่างประเทศ)\n" + "=" * 65)
         for k, (name, _) in actions.items():
             print(f"  {k:>2s}. {name}")
         print("   0. ออกจากโปรแกรม (Exit)")
-        choice = input("\nกรุณาเลือกเมนู [0-11]: ").strip().lower()
+        choice = input("\nกรุณาเลือกเมนู [0-12]: ").strip().lower()
         if choice in ("0", "q", "quit", "exit"):
             return
         if choice not in actions:
-            print("⚠️ กรุณาระบุตัวเลข 0 ถึง 11")
+            print("⚠️ กรุณาระบุตัวเลข 0 ถึง 12")
             continue
         try:
             actions[choice][1]()
@@ -251,6 +254,8 @@ def main(argv: Optional[List[str]] = None) -> int:
             )
         elif cmd == "live-updates":
             show_live_updates_cli(days_back=args.days, api_key=args.api_key)
+        elif cmd == "consolidate-master":
+            consolidate_master_rice()
         elif cmd == "list-groups":
             list_country_groups_cli()
         elif cmd == "analysis":

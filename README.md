@@ -86,11 +86,27 @@ python run_pipeline.py analysis        # ตัวอย่าง Trade Balance 
 python run_pipeline.py -h              # ดูคำอธิบายทุกคำสั่ง
 ```
 
+# หากเรียกใช้งาน python run_pipeline.py โดยไม่ใส่พารามิเตอร์ ระบบจะมีเมนูให้เลือกใช้งานได้ทันที:
+
+1. ตรวจสอบ API Key & โฟลเดอร์ผลลัพธ์ (Check API Key)
+2. อัปเดตตาราง Metadata ประเทศ และ HS Codes (Update Metadata)
+3. ตรวจสอบการแบ่งกลุ่มประเทศ (List Country Groups)
+4. ดึงข้อมูลข้าวรายประเทศ (Country Rice: 2020-2026 Monthly)
+5. ดึงข้อมูล Tariffline ระดับ 8-11 หลัก (Tariffline Data)
+6. ดึงข้อมูลสถิตินำเข้าทั่วโลก HS6 (World Import Data)
+7. ดึงข้อมูลข้าวสหรัฐฯ ย้อนหลัง (USA Rice Data)
+8. วิเคราะห์ดุลการค้า & Mirror Data (Bilateral Trade Analysis)
+9. 📊 วิเคราะห์ราคาข้าวโลก Benchmark (Rice Unit Price Benchmark)
+10. 📡 ตรวจสอบรอบปล่อยข้อมูลล่าสุด (Check Comtrade Live Updates)
+11. ⚡ สั่ง Smart Update เฉพาะประเทศที่มีข้อมูลใหม่ (Smart Incremental Update)
+12. ออกจากโปรแกรม (Exit)
+
 ---
 
 ## 🚀 ฟีเจอร์ใหม่ (Upgraded Capabilities v2.2.0)
 
 ### 1. 🌐 Universal ISO-3 Country Resolver
+
 ระบบรองรับการระบุประเทศด้วยรหัส ISO-3 Alpha (เช่น `THA`, `USA`, `VNM`, `IND`, `PAK`), ชื่อประเทศ (เช่น `Thailand`, `United States`), หรือรหัส UN M49 ตัวเลข (`764`, `842`) ได้อย่างอิสระในทุกคำสั่ง โดยใช้ In-memory lookup ร่วมกับ Local Metadata Cache ทำให้แปลงรหัสได้ในระดับไมโครวินาทีโดยไม่เสียโควต้าเน็ตเวิร์ก
 
 ```bash
@@ -104,7 +120,9 @@ python run_pipeline.py tariffline --countries "THA,USA" --chapter 10
 ---
 
 ### 2. 📊 ระบบวิเคราะห์ราคาข้าวโลก (Rice Unit Price Benchmark)
+
 วิเคราะห์และเปรียบเทียบ Unit Value (USD/kg และ USD/ตัน) ของข้าว (HS 1006) พร้อมคัดกรองตัวเลขผิดปกติด้วยสถิติ **IQR Outlier Removal (Log Scale)** และเจาะลึกตามชนิดข้าวย่อย:
+
 - `100610`: ข้าวเปลือก (Paddy)
 - `100620`: ข้าวกล้อง (Brown Rice)
 - `100630`: ข้าวขาวขัดสี (Milled/Semi-milled Rice)
@@ -117,11 +135,13 @@ python run_pipeline.py rice-benchmark --countries THA,VNM,IND,PAK,USA --flow Exp
 # วิเคราะห์ทุกประเทศที่มีไฟล์ข้อมูลใน output/by_country/
 python run_pipeline.py rice-benchmark --flow Export
 ```
+
 ผลลัพธ์จะแสดงตารางสรุปบน CLI และส่งออกเป็น Dashboard ที่ `output/rice_unit_price_benchmark.xlsx` (Sheet: `Country_Summary`, `Subheading_Breakdown`, `Monthly_Trend`) และไฟล์ CSV
 
 ---
 
 ### 3. 📡 การอัปเดตอัจฉริยะผ่าน Comtrade Live Releases (Smart Update)
+
 ตรวจสอบรอบการเผยแพร่ข้อมูลล่าสุดของ UN Comtrade API ด้วย `getLiveUpdate` / `getComtradeReleases` เพื่อตรวจจับว่าประเทศใดบ้างที่มีข้อมูลเดือนใหม่เข้ามาในช่วง N วันที่ผ่านมา แล้วทำการอัปเดตเฉพาะประเทศเหล่านั้นโดยอัตโนมัติ ช่วยประหยัดโควต้าได้มากกว่า 90%
 
 ```bash
@@ -134,9 +154,26 @@ python run_pipeline.py smart-update --days 30
 
 ---
 
+### 4. 📦 รวมฐานข้อมูล Master ข้าวโลก 272 ประเทศ (Master Rice Consolidation)
+
+ประมวลผลรวบรวมไฟล์ Excel ทั้งหมด 272 ประเทศใน `output/by_country/` มารวมเป็น Master Database ขนาดใหญ่ แยกตามทิศทางนำเข้าและส่งออก พร้อมทำ Deduplicate และจัดเรียงข้อมูลมาตรฐาน:
+
+```bash
+# คำสั่งรวมไฟล์ Master Database ทั้งหมด
+python run_pipeline.py consolidate-master
+```
+
+ไฟล์ผลลัพธ์:
+- `output/master_rice_import.csv` (~368,000 แถว, ~40 MB)
+- `output/master_rice_export.csv` (~358,000 แถว, ~39 MB)
+- รองรับการใช้งานทั้งแบบ `.csv` (เข้ารหัส `utf-8-sig`) และ `.parquet` ความเร็วสูง
+
+---
+
 ## 🤖 สถาปัตยกรรม AI Agent & Skills (Antigravity Standard)
 
 โปรเจกต์นี้ได้รับการออกแบบตามมาตรฐาน **Google Deepmind Antigravity System**:
+
 - [AGENTS.md](AGENTS.md) — กฎเหล็กด้านโควต้า API, ข้อกำหนดการจัดการข้อมูล, และแนวทางการทำงานของ AI Agent
 - `.agents/skills/comtrade-pipeline/` — ทักษะการรัน Pipeline, จัดการกลุ่มประเทศ และ Incremental Update
 - `.agents/skills/comtrade-api-v14/` — ดัชนีอ้างอิง API ทั้ง 41 ฟังก์ชันของ `comtradeapicall` v1.4.0
@@ -148,6 +185,8 @@ python run_pipeline.py smart-update --days 30
 
 | พาธ / ไฟล์                                           | คำอธิบาย                                                                 |
 | :--------------------------------------------------- | :----------------------------------------------------------------------- |
+| `output/master_rice_import.csv` / `.parquet`         | **ฐานข้อมูล Master ข้าวนำเข้าทั่วโลก 272 ประเทศ** (368,005 แถว, ~40 MB) |
+| `output/master_rice_export.csv` / `.parquet`         | **ฐานข้อมูล Master ข้าวส่งออกทั่วโลก 272 ประเทศ** (358,088 แถว, ~39 MB) |
 | `output/by_country/<CountryName>.xlsx`               | ไฟล์ Excel สถิติข้าวรายเดือน 2020–2026 รายประเทศ (Sheet: Import, Export) |
 | `output/country_groups.json`                         | แผนผังรายชื่อประเทศแบ่งกลุ่ม 1–8 ในรูปแบบ JSON                           |
 | `country_groups.md`                                  | เอกสารตารางอธิบายรายละเอียดของทั้ง 8 กลุ่มประเทศ                         |

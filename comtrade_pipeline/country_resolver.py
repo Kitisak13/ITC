@@ -147,3 +147,4 @@ def resolve_countries(identifiers: Union[str, List[str]]) -> List[Dict[str, str]
             logger.warning("⚠️ ไม่พบข้อมูลประเทศสำหรับ '%s'", item)
 
     return resolved_list
+

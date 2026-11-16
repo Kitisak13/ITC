@@ -166,3 +166,4 @@ def run_smart_incremental_update(
     print("🎉 Smart Incremental Update เสร็จสิ้นเรียบร้อย!")
     print(f"📊 ประหยัดโควต้า: ใช้ไปเพียง {quota_tracker.used_requests} Requests (ดึงเฉพาะประเทศที่มีของใหม่)")
     print("=" * 70)
+

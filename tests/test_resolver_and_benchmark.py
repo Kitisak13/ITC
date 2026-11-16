@@ -63,3 +63,15 @@ def test_rice_benchmark_from_cache():
     if not df.empty:
         assert "Country" in df.columns
         assert "Avg_Price_USD_per_Ton" in df.columns
+
+
+def test_consolidate_master_files_exist():
+    from comtrade_pipeline.config import get_output_dir
+    out = get_output_dir()
+    imp_csv = out / "master_rice_import.csv"
+    exp_csv = out / "master_rice_export.csv"
+    assert imp_csv.is_file()
+    assert exp_csv.is_file()
+    assert imp_csv.stat().st_size > 1024 * 1024
+    assert exp_csv.stat().st_size > 1024 * 1024
+

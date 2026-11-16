@@ -237,3 +237,4 @@ def run_rice_benchmark(
         logger.error("❌ บันทึกรายงาน Benchmark ล้มเหลว: %s", e)
 
     return df_summary
+

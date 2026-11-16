@@ -3,6 +3,7 @@
 from .analysis import run_all_samples, run_bilateral_mirror_sample, run_final_data_sample, run_trade_balance_sample
 from .api_utils import chunk_list, export_dataframe_to_csv, get_hs_codes, safe_api_call
 from .config import ConfigError, get_api_key, get_output_dir
+from .consolidate import consolidate_master_rice
 from .country_groups import export_country_groups_files, load_all_country_groups
 from .country_resolver import resolve_countries, resolve_country
 from .country_rice import download_country_rice_group, process_country_rice_file
@@ -37,6 +38,7 @@ __all__ = [
     "export_country_groups_files",
     "resolve_country",
     "resolve_countries",
+    "consolidate_master_rice",
     "run_rice_benchmark",
     "fetch_comtrade_releases",
     "get_recently_updated_reporters",
