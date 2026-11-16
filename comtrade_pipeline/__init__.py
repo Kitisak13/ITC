@@ -7,6 +7,7 @@ from .consolidate import consolidate_master_rice
 from .country_groups import export_country_groups_files, load_all_country_groups
 from .country_resolver import resolve_countries, resolve_country
 from .country_rice import download_country_rice_group, process_country_rice_file
+from .gdrive_sync import authorize_local_oauth, run_gdrive_sync
 from .live_updates import fetch_comtrade_releases, get_recently_updated_reporters, run_smart_incremental_update
 from .metadata import download_countries_metadata, download_hscodes_metadata, download_metadata
 from .rice_benchmark import run_rice_benchmark
@@ -39,6 +40,8 @@ __all__ = [
     "resolve_country",
     "resolve_countries",
     "consolidate_master_rice",
+    "run_gdrive_sync",
+    "authorize_local_oauth",
     "run_rice_benchmark",
     "fetch_comtrade_releases",
     "get_recently_updated_reporters",

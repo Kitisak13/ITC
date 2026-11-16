@@ -11,6 +11,7 @@ from .consolidate import consolidate_master_rice
 from .country_groups import export_country_groups_files, load_all_country_groups
 from .country_resolver import resolve_countries
 from .country_rice import download_country_rice_group
+from .gdrive_sync import authorize_local_oauth, run_gdrive_sync
 from .live_updates import fetch_comtrade_releases, get_recently_updated_reporters, run_smart_incremental_update
 from .metadata import download_metadata
 from .rice_benchmark import run_rice_benchmark
@@ -122,6 +123,14 @@ def build_parser() -> argparse.ArgumentParser:
     lu.add_argument("--days", type=int, default=30)
 
     sub.add_parser("consolidate-master", help="Consolidate all 272 country files into master_rice_import.csv and export.csv")
+    
+    gds = sub.add_parser("gdrive-sync", help="Sync incremental rice updates to Master CSV files on Google Drive")
+    gds.add_argument("--days", type=int, default=7, help="Check releases in last N days")
+    gds.add_argument("--force", action="store_true", help="Force sync even if no new releases detected")
+
+    gda = sub.add_parser("gdrive-auth", help="Authorize Google Drive OAuth 2.0 locally and get Refresh Token")
+    gda.add_argument("--credentials", default="credentials.json", help="Path to Google credentials.json")
+
     sub.add_parser("list-groups", help="Display all country groups")
     sub.add_parser("analysis", help="Final data / trade balance / mirror samples")
     sub.add_parser("check-key", help="Verify API key & output folder")
@@ -182,20 +191,22 @@ def interactive_menu(api_key: Optional[str] = None) -> None:
             ),
         ),
         "9": ("📦 รวมฐานข้อมูล Master ข้าวโลก 272 ประเทศ (Consolidate Master CSV & Parquet)", lambda: consolidate_master_rice()),
-        "10": ("📋 แสดงรายชื่อกลุ่มประเทศทั้งหมด (List Groups)", lambda: list_country_groups_cli()),
-        "11": ("วิเคราะห์ตัวอย่าง (Trade Balance / Mirror Data)", lambda: run_all_samples(api_key=api_key)),
-        "12": ("ตรวจสอบสถานะ API Key และโฟลเดอร์ผลลัพธ์", lambda: check_key(api_key)),
+        "10": ("☁️ ซิงค์ข้อมูลใหม่ขึ้น Google Drive Master CSV (Google Drive Sync)", lambda: run_gdrive_sync(api_key=api_key)),
+        "11": ("🔑 ยืนยันตัวตน Google Drive OAuth และรับ Refresh Token", lambda: authorize_local_oauth()),
+        "12": ("📋 แสดงรายชื่อกลุ่มประเทศทั้งหมด (List Groups)", lambda: list_country_groups_cli()),
+        "13": ("วิเคราะห์ตัวอย่าง (Trade Balance / Mirror Data)", lambda: run_all_samples(api_key=api_key)),
+        "14": ("ตรวจสอบสถานะ API Key และโฟลเดอร์ผลลัพธ์", lambda: check_key(api_key)),
     }
     while True:
         print("\n" + "=" * 65 + "\n🌍 UN Comtrade Data Pipeline (ระบบข้อมูลการค้าระหว่างประเทศ)\n" + "=" * 65)
         for k, (name, _) in actions.items():
             print(f"  {k:>2s}. {name}")
         print("   0. ออกจากโปรแกรม (Exit)")
-        choice = input("\nกรุณาเลือกเมนู [0-12]: ").strip().lower()
+        choice = input("\nกรุณาเลือกเมนู [0-14]: ").strip().lower()
         if choice in ("0", "q", "quit", "exit"):
             return
         if choice not in actions:
-            print("⚠️ กรุณาระบุตัวเลข 0 ถึง 12")
+            print("⚠️ กรุณาระบุตัวเลข 0 ถึง 14")
             continue
         try:
             actions[choice][1]()
@@ -256,6 +267,10 @@ def main(argv: Optional[List[str]] = None) -> int:
             show_live_updates_cli(days_back=args.days, api_key=args.api_key)
         elif cmd == "consolidate-master":
             consolidate_master_rice()
+        elif cmd == "gdrive-sync":
+            run_gdrive_sync(days_back=args.days, force=args.force, api_key=args.api_key)
+        elif cmd == "gdrive-auth":
+            authorize_local_oauth(args.credentials)
         elif cmd == "list-groups":
             list_country_groups_cli()
         elif cmd == "analysis":

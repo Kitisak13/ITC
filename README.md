@@ -170,6 +170,20 @@ python run_pipeline.py consolidate-master
 
 ---
 
+### 5. ☁️ ระบบ Auto-Sync สู่ Google Drive อัตโนมัติ (Twice-Daily Automated Pipeline)
+
+ระบบซิงค์ข้อมูลผ่าน GitHub Actions Scheduled Workflow รันอัตโนมัติวันละ 2 รอบ (08:00 และ 20:00 น. ตามเวลาไทย) เพื่อตรวจจับและ Append ข้อมูลใหม่เข้าสู่ Master CSV บน Google Drive โดยที่ File ID และ URL ไม่เปลี่ยน:
+
+```bash
+# ทดสอบการซิงค์ข้อมูลขึ้น Google Drive ด้วยตนเองผ่าน CLI
+python run_pipeline.py gdrive-sync --days 7
+
+# รันเพื่อยืนยันตัวตน Google Drive OAuth และรับ Refresh Token
+python run_pipeline.py gdrive-auth
+```
+
+---
+
 ## 🤖 สถาปัตยกรรม AI Agent & Skills (Antigravity Standard)
 
 โปรเจกต์นี้ได้รับการออกแบบตามมาตรฐาน **Google Deepmind Antigravity System**:
