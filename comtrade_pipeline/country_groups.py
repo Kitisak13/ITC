@@ -57,7 +57,9 @@ def load_all_country_groups(group_size: int = 35) -> Dict[int, List[Dict[str, st
     Group 1: Top 35 rice exporters & importers.
     Group 2..N: Remaining active reporting countries (35 per group).
     """
-    meta_path = get_output_dir() / "metadata_countries.csv"
+    meta_path = Path(__file__).parent / "data" / "metadata_countries.csv"
+    if not meta_path.is_file():
+        meta_path = get_output_dir() / "metadata_countries.csv"
     if not meta_path.is_file():
         # Fallback to Group 1 only if metadata not found
         return {1: [{"code": c, "name": n} for c, n in TOP_35_RICE_COUNTRIES]}
@@ -115,7 +117,7 @@ def export_country_groups_files():
         for idx, c in enumerate(countries, 1):
             lines.append(f"| {idx} | `{c['code']}` | {c['name']} |")
         lines.append("")
-        lines.append(f"**คำสั่งรันกลุ่มนี้:** `python run_pipeline.py --mode country-rice --group {grp_num}`")
+        lines.append(f"**คำสั่งรันกลุ่มนี้:** `python run_pipeline.py country-rice --group {grp_num}`")
         lines.append("")
         lines.append("---")
         lines.append("")

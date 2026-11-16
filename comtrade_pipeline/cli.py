@@ -138,6 +138,21 @@ def build_parser() -> argparse.ArgumentParser:
     return p
 
 
+def _prompt_country_rice(api_key: Optional[str]) -> None:
+    countries = input("ระบุรหัสประเทศ ISO3 (เว้นว่างเพื่อเลือกตาม Group): ").strip() or None
+    group_number = 1 if countries else int(input("ระบุหมายเลข Group [1-8]: ").strip() or "1")
+    start_year = int(input("ปีเริ่มต้น [2020]: ").strip() or "2020")
+    end_year = int(input("ปีสิ้นสุด [2026]: ").strip() or "2026")
+    download_country_rice_group(
+        group_number=group_number,
+        countries=countries,
+        start_year=start_year,
+        end_year=end_year,
+        incremental=False,
+        api_key=api_key,
+    )
+
+
 def interactive_menu(api_key: Optional[str] = None) -> None:
     actions = {
         "1": ("ดาวน์โหลด Metadata พื้นฐาน (ประเทศ & HS Codes)", lambda: download_metadata()),
@@ -159,14 +174,7 @@ def interactive_menu(api_key: Optional[str] = None) -> None:
         "4": ("ดึงข้อมูลข้าวสหรัฐฯ HS 1006 รายเดือน", lambda: download_usa_rice_monthly(api_key=api_key)),
         "5": (
             "🌾 ดึงข้อมูลข้าวรายประเทศ (เลือก Group 35 ประเทศ หรือระบุ ISO3 เช่น THA,VNM,USA)",
-            lambda: download_country_rice_group(
-                group_number=int(input("ระบุหมายเลข Group [1-8]: ").strip() or "1") if not input("ต้องการระบุประเทศเองด้วยรหัส ISO3 ไหม? (กด Enter เพื่อเลือกตาม Group / หรือพิมพ์ ISO3): ").strip() else 1,
-                countries=input("ระบุรหัสประเทศ ISO3 (เว้นว่างเพื่อใช้ตาม Group): ").strip() or None,
-                start_year=int(input("ปีเริ่มต้น [2020]: ").strip() or "2020"),
-                end_year=int(input("ปีสิ้นสุด [2026]: ").strip() or "2026"),
-                incremental=False,
-                api_key=api_key,
-            ),
+            lambda: _prompt_country_rice(api_key),
         ),
         "6": (
             "⚡ อัปเดตข้อมูลข้าวรายเดือน (Incremental Update ต่อข้อมูลเฉพาะปีปัจจุบัน)",

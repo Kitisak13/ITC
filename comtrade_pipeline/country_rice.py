@@ -17,7 +17,7 @@ import pandas as pd
 
 import comtradeapicall
 
-from .api_utils import MAX_RECORDS, safe_api_call
+from .api_utils import MAX_RECORDS, safe_api_call, warn_if_truncated
 from .config import get_api_key, get_output_dir
 from .country_groups import TOP_35_RICE_COUNTRIES, load_all_country_groups
 from .country_resolver import resolve_countries
@@ -75,6 +75,7 @@ def fetch_country_rice_flow(
     quota_tracker: QuotaTracker,
     api_key: Optional[str] = None,
     delay: float = 1.0,
+    raise_on_error: bool = False,
 ) -> pd.DataFrame:
     """Fetches rice data for one flow (M or X) for a country across given years."""
     key = get_api_key(api_key)
@@ -87,6 +88,10 @@ def fetch_country_rice_flow(
                 quota_tracker.used_requests,
                 quota_tracker.max_requests,
             )
+            if raise_on_error:
+                raise RuntimeError(
+                    f"API quota limit reached ({quota_tracker.used_requests}/{quota_tracker.max_requests})"
+                )
             break
 
         try:
@@ -114,6 +119,7 @@ def fetch_country_rice_flow(
             quota_tracker.increment(1)
 
             if df is not None and not df.empty:
+                warn_if_truncated(df, 100_000, f"({country_name}, {year}, {flow_code})")
                 logger.info(
                     "    -> [%s] ปี %s flow=%s: ✅ %s แถว",
                     country_name,
@@ -128,6 +134,8 @@ def fetch_country_rice_flow(
         except Exception as e:
             quota_tracker.increment(1)
             logger.error("    -> [%s] ปี %s flow=%s: ❌ %s", country_name, year, flow_code, e)
+            if raise_on_error:
+                raise
 
         time.sleep(delay)
 
@@ -136,7 +144,10 @@ def fetch_country_rice_flow(
 
     combined = pd.concat(frames, ignore_index=True)
     existing_cols = [c for c in COLUMNS_TO_KEEP if c in combined.columns]
-    combined = combined[existing_cols]
+    combined = combined[existing_cols].copy()
+    for col in ("period", "reporterCode", "partnerCode", "cmdCode", "flowCode"):
+        if col in combined.columns:
+            combined[col] = combined[col].fillna("").astype(str).str.strip()
     sort_cols = [c for c in ("period", "cmdCode", "partnerDesc") if c in combined.columns]
     return combined.sort_values(sort_cols) if sort_cols else combined
 
@@ -185,11 +196,27 @@ def process_country_rice_file(
 
     # Merge if incremental
     def merge_frames(old_df: pd.DataFrame, new_df: pd.DataFrame) -> pd.DataFrame:
+        def _normalize(frame: pd.DataFrame) -> pd.DataFrame:
+            out = frame.copy()
+            for col in ("period", "reporterCode", "partnerCode", "cmdCode", "flowCode", "partnerDesc", "cmdDesc"):
+                if col in out.columns:
+                    s = (
+                        out[col]
+                        .fillna("")
+                        .astype(str)
+                        .str.strip()
+                        .replace({"nan": "", "None": "", "<NA>": ""})
+                    )
+                    if col in ("period", "reporterCode", "partnerCode", "cmdCode", "flowCode"):
+                        s = s.str.replace(r"\.0$", "", regex=True)
+                    out[col] = s
+            return out
+
         if old_df.empty:
-            return new_df
+            return _normalize(new_df) if not new_df.empty else new_df
         if new_df.empty:
-            return old_df
-        merged = pd.concat([old_df, new_df], ignore_index=True)
+            return _normalize(old_df)
+        merged = pd.concat([_normalize(old_df), _normalize(new_df)], ignore_index=True)
         dedup_keys = [c for c in ("period", "partnerCode", "cmdCode", "flowCode") if c in merged.columns]
         if dedup_keys:
             merged = merged.drop_duplicates(subset=dedup_keys, keep="last")

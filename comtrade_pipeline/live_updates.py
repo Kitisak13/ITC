@@ -6,7 +6,7 @@ targeted incremental updates only for those countries, saving massive API quota.
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Set
 import pandas as pd
@@ -58,40 +58,69 @@ def fetch_comtrade_releases(api_key: Optional[str] = None, use_public: bool = Fa
 def get_recently_updated_reporters(
     days_back: int = 30,
     api_key: Optional[str] = None,
-) -> List[Dict[str, str]]:
+) -> List[Dict[str, object]]:
     """
     Returns a list of countries that published new commodity trade data within the last N days.
+    Each item includes ``code``, ``name``, ``release_token`` (latest release timestamp),
+    and ``years`` (years found in released periods, if available).
     """
     df = fetch_comtrade_releases(api_key=api_key)
     if df.empty:
         return []
 
+    df = df.copy()
+
     # Filter commodity data (typeCode == 'C')
     if "typeCode" in df.columns:
         df = df[df["typeCode"] == "C"]
 
-    # Filter by publication date if available
+    # Filter by publication date if available (normalize both sides to UTC)
     date_col = next((c for c in ["publicationDate", "publishedDate", "releaseDate"] if c in df.columns), None)
     if date_col:
         try:
-            cutoff = datetime.now() - timedelta(days=days_back)
-            df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
-            df = df[df[date_col] >= cutoff]
+            cutoff_utc = pd.Timestamp.now(timezone.utc) - pd.Timedelta(days=days_back)
+            parsed_dates = pd.to_datetime(df[date_col], errors="coerce", utc=True)
+            df = df.assign(_parsed_release_dt=parsed_dates)
+            df = df[df["_parsed_release_dt"] >= cutoff_utc]
         except Exception as e:
             logger.warning("กรองวันที่ไม่สำเร็จ (%s) จะใช้ข้อมูลทั้งหมดที่ส่งกลับมา", e)
 
-    if "reporterCode" not in df.columns:
+    if "reporterCode" not in df.columns or df.empty:
         return []
 
-    unique_reporters: Set[str] = set(df["reporterCode"].dropna().unique())
-    updated_countries = []
+    df["reporterCode"] = df["reporterCode"].astype(str).str.strip()
+    unique_reporters = sorted(
+        {code for code in df["reporterCode"].dropna().unique() if code and code.lower() != "nan"},
+        key=lambda x: (len(x), x),
+    )
+    updated_countries: List[Dict[str, object]] = []
 
     for r_code in unique_reporters:
+        sub = df[df["reporterCode"] == r_code]
+
+        release_token = ""
+        if "_parsed_release_dt" in sub.columns and sub["_parsed_release_dt"].notna().any():
+            release_token = sub["_parsed_release_dt"].max().isoformat()
+        elif date_col and date_col in sub.columns:
+            vals = sub[date_col].dropna().astype(str)
+            if not vals.empty:
+                release_token = vals.max()
+
+        years_found: Set[int] = set()
+        if "period" in sub.columns:
+            for p_val in sub["period"].dropna().astype(str):
+                p_clean = p_val.strip()
+                if len(p_clean) >= 4 and p_clean[:4].isdigit():
+                    years_found.add(int(p_clean[:4]))
+
         res = resolve_country(r_code)
         if res:
-            updated_countries.append({"code": res[0], "name": res[1]})
+            entry: Dict[str, object] = {"code": res[0], "name": res[1], "release_token": release_token}
         else:
-            updated_countries.append({"code": r_code, "name": f"Country_{r_code}"})
+            entry = {"code": r_code, "name": f"Country_{r_code}", "release_token": release_token}
+        if years_found:
+            entry["years"] = sorted(years_found)
+        updated_countries.append(entry)
 
     return updated_countries
 

@@ -88,18 +88,21 @@ python run_pipeline.py -h              # ดูคำอธิบายทุก
 
 # หากเรียกใช้งาน python run_pipeline.py โดยไม่ใส่พารามิเตอร์ ระบบจะมีเมนูให้เลือกใช้งานได้ทันที:
 
-1. ตรวจสอบ API Key & โฟลเดอร์ผลลัพธ์ (Check API Key)
-2. อัปเดตตาราง Metadata ประเทศ และ HS Codes (Update Metadata)
-3. ตรวจสอบการแบ่งกลุ่มประเทศ (List Country Groups)
-4. ดึงข้อมูลข้าวรายประเทศ (Country Rice: 2020-2026 Monthly)
-5. ดึงข้อมูล Tariffline ระดับ 8-11 หลัก (Tariffline Data)
-6. ดึงข้อมูลสถิตินำเข้าทั่วโลก HS6 (World Import Data)
-7. ดึงข้อมูลข้าวสหรัฐฯ ย้อนหลัง (USA Rice Data)
-8. วิเคราะห์ดุลการค้า & Mirror Data (Bilateral Trade Analysis)
-9. 📊 วิเคราะห์ราคาข้าวโลก Benchmark (Rice Unit Price Benchmark)
-10. 📡 ตรวจสอบรอบปล่อยข้อมูลล่าสุด (Check Comtrade Live Updates)
-11. ⚡ สั่ง Smart Update เฉพาะประเทศที่มีข้อมูลใหม่ (Smart Incremental Update)
-12. ออกจากโปรแกรม (Exit)
+1. ดาวน์โหลด Metadata พื้นฐาน (ประเทศ & HS Codes)
+2. ดึงข้อมูลนำเข้าทั่วโลก HS 6 หลัก (หมวด 07 พืชผัก)
+3. ดึงข้อมูล Tariff line 8-11 หลัก (รองรับ ISO3 เช่น USA,RUS)
+4. ดึงข้อมูลข้าวสหรัฐฯ HS 1006 รายเดือน
+5. 🌾 ดึงข้อมูลข้าวรายประเทศ (เลือก Group 35 ประเทศ หรือระบุ ISO3 เช่น THA,VNM,USA)
+6. ⚡ อัปเดตข้อมูลข้าวรายเดือน (Incremental Update ต่อข้อมูลเฉพาะปีปัจจุบัน)
+7. 📊 เปรียบเทียบราคาข้าวโลก (Rice Unit Price Benchmark: THA vs VNM vs IND ฯลฯ)
+8. 🛰️ ตรวจจับการปล่อยข้อมูลใหม่ (Live Releases & Smart Incremental Update)
+9. 📦 รวมฐานข้อมูล Master ข้าวโลก 272 ประเทศ (Consolidate Master CSV & Parquet)
+10. ☁️ ซิงค์ข้อมูลใหม่ขึ้น Google Drive Master CSV (Google Drive Sync)
+11. 🔑 ยืนยันตัวตน Google Drive OAuth และรับ Refresh Token
+12. 📋 แสดงรายชื่อกลุ่มประเทศทั้งหมด (List Groups)
+13. วิเคราะห์ตัวอย่าง (Trade Balance / Mirror Data)
+14. ตรวจสอบสถานะ API Key และโฟลเดอร์ผลลัพธ์
+15. ออกจากโปรแกรม (Exit)
 
 ---
 
@@ -164,6 +167,7 @@ python run_pipeline.py consolidate-master
 ```
 
 ไฟล์ผลลัพธ์:
+
 - `output/master_rice_import.csv` (~368,000 แถว, ~40 MB)
 - `output/master_rice_export.csv` (~358,000 แถว, ~39 MB)
 - รองรับการใช้งานทั้งแบบ `.csv` (เข้ารหัส `utf-8-sig`) และ `.parquet` ความเร็วสูง
@@ -199,8 +203,8 @@ python run_pipeline.py gdrive-auth
 
 | พาธ / ไฟล์                                           | คำอธิบาย                                                                 |
 | :--------------------------------------------------- | :----------------------------------------------------------------------- |
-| `output/master_rice_import.csv` / `.parquet`         | **ฐานข้อมูล Master ข้าวนำเข้าทั่วโลก 272 ประเทศ** (368,005 แถว, ~40 MB) |
-| `output/master_rice_export.csv` / `.parquet`         | **ฐานข้อมูล Master ข้าวส่งออกทั่วโลก 272 ประเทศ** (358,088 แถว, ~39 MB) |
+| `output/master_rice_import.csv` / `.parquet`         | **ฐานข้อมูล Master ข้าวนำเข้าทั่วโลก 272 ประเทศ** (368,005 แถว, ~40 MB)  |
+| `output/master_rice_export.csv` / `.parquet`         | **ฐานข้อมูล Master ข้าวส่งออกทั่วโลก 272 ประเทศ** (358,088 แถว, ~39 MB)  |
 | `output/by_country/<CountryName>.xlsx`               | ไฟล์ Excel สถิติข้าวรายเดือน 2020–2026 รายประเทศ (Sheet: Import, Export) |
 | `output/country_groups.json`                         | แผนผังรายชื่อประเทศแบ่งกลุ่ม 1–8 ในรูปแบบ JSON                           |
 | `country_groups.md`                                  | เอกสารตารางอธิบายรายละเอียดของทั้ง 8 กลุ่มประเทศ                         |

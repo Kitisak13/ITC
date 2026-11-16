@@ -19,6 +19,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: comtrade-gdrive-sync
+  cancel-in-progress: false
+
 jobs:
   sync:
     name: Detect & Sync Rice Data to Google Drive
@@ -54,8 +58,11 @@ jobs:
           GDRIVE_IMPORT_PARQUET_ID: ${{ secrets.GDRIVE_IMPORT_PARQUET_ID }}
           GDRIVE_EXPORT_PARQUET_ID: ${{ secrets.GDRIVE_EXPORT_PARQUET_ID }}
         run: |
-          DAYS="${{ github.event.inputs.days_back || '7' }}"
-          FORCE_FLAG="${{ github.event.inputs.force == 'true' && '--force' || '' }}"
+          DAYS="${{ inputs.days_back || '7' }}"
+          FORCE_FLAG=""
+          if [ "${{ inputs.force }}" = "true" ]; then
+            FORCE_FLAG="--force"
+          fi
           python run_pipeline.py gdrive-sync --days "$DAYS" $FORCE_FLAG
 
       - name: 💾 Commit & Push sync_state.json if updated
@@ -64,5 +71,9 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           if [ -f sync_state.json ]; then
             git add sync_state.json
-            git diff-index --quiet HEAD || (git commit -m "chore(sync): update sync_state.json [skip ci]" && git push)
+            if ! git diff-index --quiet HEAD; then
+              git commit -m "chore(sync): update sync_state.json [skip ci]"
+              git pull --rebase origin "${{ github.ref_name }}"
+              git push
+            fi
           fi
