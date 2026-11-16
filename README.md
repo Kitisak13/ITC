@@ -174,9 +174,9 @@ python run_pipeline.py consolidate-master
 
 ---
 
-### 5. ☁️ ระบบ Auto-Sync สู่ Google Drive อัตโนมัติ (Twice-Daily Automated Pipeline)
+### 5. ☁️ ระบบ Auto-Sync สู่ Google Drive อัตโนมัติ (Weekday Automated Pipeline)
 
-ระบบซิงค์ข้อมูลผ่าน GitHub Actions Scheduled Workflow รันอัตโนมัติวันละ 2 รอบ (08:00 และ 20:00 น. ตามเวลาไทย) เพื่อตรวจจับและ Append ข้อมูลใหม่เข้าสู่ Master CSV บน Google Drive โดยที่ File ID และ URL ไม่เปลี่ยน:
+ระบบซิงค์ข้อมูลผ่าน GitHub Actions Scheduled Workflow รันอัตโนมัติวันละ 1 รอบ เวลา **13:00 น. (UTC+7) เฉพาะวันจันทร์–ศุกร์** เพื่อตรวจจับและ Append ข้อมูลใหม่เข้าสู่ Master CSV บน Google Drive โดยที่ File ID และ URL ไม่เปลี่ยน:
 
 ```bash
 # ทดสอบการซิงค์ข้อมูลขึ้น Google Drive ด้วยตนเองผ่าน CLI

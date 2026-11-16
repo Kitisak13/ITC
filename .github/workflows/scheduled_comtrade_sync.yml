@@ -2,8 +2,8 @@ name: UN Comtrade Auto-Sync to Google Drive
 
 on:
   schedule:
-    # Runs twice a day at 01:00 and 13:00 UTC (08:00 and 20:00 Bangkok Time UTC+7)
-    - cron: '0 1,13 * * *'
+    # Runs once a day Mon-Fri at 06:00 UTC (13:00 Bangkok Time UTC+7)
+    - cron: '0 6 * * 1-5'
   workflow_dispatch:
     inputs:
       days_back:
@@ -31,12 +31,12 @@ jobs:
 
     steps:
       - name: 📥 Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 1
 
       - name: 🐍 Set up Python 3.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
           cache: 'pip'

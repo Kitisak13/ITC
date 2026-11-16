@@ -250,3 +250,17 @@ def test_get_recently_updated_reporters_utc_dates(monkeypatch):
     assert res[0]["code"] == "764"
     assert res[0]["release_token"]
     assert res[0]["years"] == [2026]
+
+
+def test_get_recently_updated_reporters_fallback_release_token(monkeypatch):
+    mock_df = pd.DataFrame(
+        [
+            {"reporterCode": "36", "typeCode": "C", "period": "202609", "datasetCode": "30036202609"},
+        ]
+    )
+    monkeypatch.setattr(live_updates, "fetch_comtrade_releases", lambda api_key=None: mock_df)
+
+    res = live_updates.get_recently_updated_reporters(days_back=7)
+    assert len(res) == 1
+    assert res[0]["code"] == "36"
+    assert res[0]["release_token"] == "datasetCode:30036202609"

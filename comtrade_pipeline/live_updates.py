@@ -75,13 +75,30 @@ def get_recently_updated_reporters(
         df = df[df["typeCode"] == "C"]
 
     # Filter by publication date if available (normalize both sides to UTC)
-    date_col = next((c for c in ["publicationDate", "publishedDate", "releaseDate"] if c in df.columns), None)
+    date_candidates = [
+        "publicationDate",
+        "publishedDate",
+        "releaseDate",
+        "publicationDateShort",
+        "lastUpdated",
+        "updatedDate",
+    ]
+    date_col = next((c for c in date_candidates if c in df.columns), None)
+    if not date_col:
+        date_col = next(
+            (c for c in df.columns if "date" in c.lower() and ("pub" in c.lower() or "rel" in c.lower())),
+            None,
+        )
     if date_col:
         try:
             cutoff_utc = pd.Timestamp.now(timezone.utc) - pd.Timedelta(days=days_back)
-            parsed_dates = pd.to_datetime(df[date_col], errors="coerce", utc=True)
-            df = df.assign(_parsed_release_dt=parsed_dates)
-            df = df[df["_parsed_release_dt"] >= cutoff_utc]
+            try:
+                parsed_dates = pd.to_datetime(df[date_col], errors="coerce", utc=True, format="mixed")
+            except TypeError:
+                parsed_dates = pd.to_datetime(df[date_col], errors="coerce", utc=True)
+            if parsed_dates.notna().any():
+                df = df.assign(_parsed_release_dt=parsed_dates)
+                df = df[df["_parsed_release_dt"] >= cutoff_utc]
         except Exception as e:
             logger.warning("กรองวันที่ไม่สำเร็จ (%s) จะใช้ข้อมูลทั้งหมดที่ส่งกลับมา", e)
 
@@ -102,9 +119,18 @@ def get_recently_updated_reporters(
         if "_parsed_release_dt" in sub.columns and sub["_parsed_release_dt"].notna().any():
             release_token = sub["_parsed_release_dt"].max().isoformat()
         elif date_col and date_col in sub.columns:
-            vals = sub[date_col].dropna().astype(str)
+            vals = sub[date_col].dropna().astype(str).str.strip()
+            vals = vals[vals != ""]
             if not vals.empty:
                 release_token = vals.max()
+
+        if not release_token:
+            for fallback_col in ("datasetCode", "period"):
+                if fallback_col in sub.columns:
+                    fvals = sorted({v.strip() for v in sub[fallback_col].dropna().astype(str) if v.strip()})
+                    if fvals:
+                        release_token = f"{fallback_col}:{','.join(fvals[-5:])}"
+                        break
 
         years_found: Set[int] = set()
         if "period" in sub.columns:
