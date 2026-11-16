@@ -12,6 +12,9 @@ dist/
 # Environment & secrets
 .env
 api_key.txt
+credentials.json
+token.json
+service_account.json
 
 # Output data
 output/
