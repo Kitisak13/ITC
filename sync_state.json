@@ -1,19 +1,12 @@
 {
-  "last_sync_time": "2026-11-17 15:26:02 UTC",
+  "last_sync_time": "2026-11-18 14:59:47 UTC",
   "last_updated_countries": [
-    "Australia",
-    "Bolivia (Plurinational State of)",
-    "Bosnia Herzegovina",
-    "Burundi",
-    "Denmark",
-    "Faroe Isds",
-    "Fiji",
-    "Germany",
-    "Indonesia",
-    "Kyrgyzstan",
-    "Lithuania",
-    "Philippines",
-    "Türkiye"
+    "Croatia",
+    "Czechia",
+    "El Salvador",
+    "Estonia",
+    "Hungary",
+    "Japan"
   ],
   "country_releases": {
     "36": "2026-11-16T00:00:00+00:00",
@@ -28,6 +21,12 @@
     "417": "2026-11-11T00:00:00+00:00",
     "440": "2026-11-16T00:00:00+00:00",
     "608": "2026-11-16T00:00:00+00:00",
-    "792": "2026-11-14T00:00:00+00:00"
+    "792": "2026-11-14T00:00:00+00:00",
+    "191": "2026-11-18T00:00:00+00:00",
+    "203": "2026-11-18T00:00:00+00:00",
+    "222": "2026-11-18T00:00:00+00:00",
+    "233": "2026-11-18T00:00:00+00:00",
+    "348": "2026-11-18T00:00:00+00:00",
+    "392": "2026-11-18T00:00:00+00:00"
   }
 }
